@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>NEXA v7.4.8</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  font-family: Arial;
+  background: #0f172a;
+  color: white;
+  text-align: center;
+}
+
+header {
+  padding: 20px;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+button {
+  padding: 10px 20px;
+  margin: 10px;
+  background: #00ffcc;
+  border: none;
+  cursor: pointer;
+}
+
+input, textarea {
+  width: 80%;
+  padding: 10px;
+  margin: 10px;
+}
+
+#ownerPanel {
+  display: none;
+  background: #1e293b;
+  padding: 20px;
+}
+
+#adList {
+  margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<header>NEXA v7.4.8</header>
+
+<h2>Business Promotion Platform</h2>
+
+<input type="email" id="email" placeholder="Enter your email">
+<button onclick="login()">Login</button>
+
+<div id="ownerPanel">
+  <h3>👑 Owner Control Panel</h3>
+  <p>Welcome, App Owner!</p>
+</div>
+
+<hr>
+
+<h3>Post Your Business Ad</h3>
+<input type="text" id="title" placeholder="Business Name">
+<textarea id="description" placeholder="Describe your business"></textarea>
+<button onclick="postAd()">Post Ad</button>
+
+<div id="adList"></div>
+
+<hr>
+
+<h3>🤖 LEXA AI Assistant</h3>
+<input type="text" id="aiInput" placeholder="Ask LEXA something...">
+<button onclick="talkToLexa()">Send</button>
+<button onclick="voiceTalk()">🎤 Voice</button>
+
+<p id="aiResponse"></p>
+
+<script>
+function login() {
+  let email = document.getElementById("email").value;
+
+  if(email === "xhadowxr@gmail.com") {
+    document.getElementById("ownerPanel").style.display = "block";
+    alert("Owner Access Granted");
+  } else {
+    alert("User Login Successful");
+  }
+}
+
+function postAd() {
+  let title = document.getElementById("title").value;
+  let desc = document.getElementById("description").value;
+
+  let adDiv = document.createElement("div");
+  adDiv.innerHTML = "<h4>" + title + "</h4><p>" + desc + "</p><hr>";
+
+  document.getElementById("adList").appendChild(adDiv);
+}
+
+function talkToLexa() {
+  let input = document.getElementById("aiInput").value;
+  document.getElementById("aiResponse").innerText = 
+    "LEXA v1 Response: I'm learning! You asked: " + input;
+}
+
+function voiceTalk() {
+  let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  recognition.onresult = function(event) {
+    let speech = event.results[0][0].transcript;
+    document.getElementById("aiInput").value = speech;
+    talkToLexa();
+  }
+  recognition.start();
+}
+</script>
+
+</body>
+</html>
