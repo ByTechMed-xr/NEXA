@@ -1,117 +1,243 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>NEXA v7.4.8</title>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexa v6.7.3</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"></script>
 
 <style>
-body {
-  font-family: Arial;
-  background: #0f172a;
-  color: white;
-  text-align: center;
+body{
+margin:0;
+font-family:Arial;
+background:#000;
+color:#fff;
 }
-
-header {
-  padding: 20px;
-  font-size: 24px;
-  font-weight: bold;
+header{
+display:flex;
+justify-content:space-between;
+padding:15px;
+background:#111;
+position:fixed;
+width:100%;
+top:0;
+z-index:1000;
 }
-
-button {
-  padding: 10px 20px;
-  margin: 10px;
-  background: #00ffcc;
-  border: none;
-  cursor: pointer;
+button{
+padding:8px;
+border:none;
+border-radius:5px;
+background:red;
+color:white;
 }
-
-input, textarea {
-  width: 80%;
-  padding: 10px;
-  margin: 10px;
+.feed{
+margin-top:70px;
+height:calc(100vh - 70px);
+overflow-y:scroll;
+scroll-snap-type:y mandatory;
 }
-
-#ownerPanel {
-  display: none;
-  background: #1e293b;
-  padding: 20px;
+.post{
+height:100vh;
+scroll-snap-align:start;
+position:relative;
+display:flex;
+align-items:flex-end;
+padding:20px;
+background:#111;
 }
-
-#adList {
-  margin-top: 20px;
+.caption{
+position:absolute;
+bottom:20px;
+left:20px;
+max-width:65%;
+}
+.actions{
+position:absolute;
+right:20px;
+bottom:100px;
+display:flex;
+flex-direction:column;
+align-items:center;
+}
+.actions button{
+background:none;
+font-size:20px;
+margin:10px 0;
+}
+.panel{
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+background:white;
+color:black;
+max-height:60%;
+overflow-y:auto;
+display:none;
+padding:15px;
+}
+.admin{
+color:yellow;
+font-weight:bold;
 }
 </style>
 </head>
 
 <body>
 
-<header>NEXA v7.4.8</header>
+<header>
+<div>Nexa v6.7.3</div>
+<div>
+<button onclick="openProfile()">Profile</button>
+<button onclick="newPost()">Post</button>
+<button onclick="logout()">Logout</button>
+</div>
+</header>
 
-<h2>Business Promotion Platform</h2>
-
-<input type="email" id="email" placeholder="Enter your email">
+<div id="auth" style="padding:20px;">
+<h2>Login</h2>
+<input id="email" placeholder="Email"><br><br>
+<input id="password" type="password" placeholder="Password"><br><br>
+<button onclick="signup()">Sign Up</button>
 <button onclick="login()">Login</button>
-
-<div id="ownerPanel">
-  <h3>👑 Owner Control Panel</h3>
-  <p>Welcome, App Owner!</p>
 </div>
 
-<hr>
+<div id="app" style="display:none;">
+<div id="feed" class="feed"></div>
+</div>
 
-<h3>Post Your Business Ad</h3>
-<input type="text" id="title" placeholder="Business Name">
-<textarea id="description" placeholder="Describe your business"></textarea>
-<button onclick="postAd()">Post Ad</button>
-
-<div id="adList"></div>
-
-<hr>
-
-<h3>🤖 LEXA AI Assistant</h3>
-<input type="text" id="aiInput" placeholder="Ask LEXA something...">
-<button onclick="talkToLexa()">Send</button>
-<button onclick="voiceTalk()">🎤 Voice</button>
-
-<p id="aiResponse"></p>
+<div id="panel" class="panel"></div>
 
 <script>
-function login() {
-  let email = document.getElementById("email").value;
+const firebaseConfig = {
+  YOUR_FIREBASE_CONFIG_HERE
+};
 
-  if(email === "xhadowxr@gmail.com") {
-    document.getElementById("ownerPanel").style.display = "block";
-    alert("Owner Access Granted");
-  } else {
-    alert("User Login Successful");
-  }
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.firestore();
+const OWNER_EMAIL="xhadowxr@gmail.com";
+
+let currentPost=null;
+
+auth.onAuthStateChanged(user=>{
+if(user){
+authDiv.style.display="none";
+app.style.display="block";
+loadFeed();
+}else{
+authDiv.style.display="block";
+app.style.display="none";
+}
+});
+
+function signup(){
+auth.createUserWithEmailAndPassword(email.value,password.value);
 }
 
-function postAd() {
-  let title = document.getElementById("title").value;
-  let desc = document.getElementById("description").value;
-
-  let adDiv = document.createElement("div");
-  adDiv.innerHTML = "<h4>" + title + "</h4><p>" + desc + "</p><hr>";
-
-  document.getElementById("adList").appendChild(adDiv);
+function login(){
+auth.signInWithEmailAndPassword(email.value,password.value);
 }
 
-function talkToLexa() {
-  let input = document.getElementById("aiInput").value;
-  document.getElementById("aiResponse").innerText = 
-    "LEXA v1 Response: I'm learning! You asked: " + input;
+function logout(){
+auth.signOut();
 }
 
-function voiceTalk() {
-  let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-  recognition.onresult = function(event) {
-    let speech = event.results[0][0].transcript;
-    document.getElementById("aiInput").value = speech;
-    talkToLexa();
-  }
-  recognition.start();
+function newPost(){
+let text=prompt("Write something:");
+if(!text) return;
+db.collection("posts").add({
+text:text,
+email:auth.currentUser.email,
+likes:0,
+time:Date.now()
+});
+}
+
+function loadFeed(){
+db.collection("posts").orderBy("time","desc")
+.onSnapshot(snapshot=>{
+let html="";
+snapshot.forEach(doc=>{
+let d=doc.data();
+let adminTag=d.email===OWNER_EMAIL?
+"<span class='admin'>(Creator)</span>":"";
+html+=`
+<div class="post">
+<div class="caption">
+<b>${d.email}</b> ${adminTag}
+<p>${d.text}</p>
+</div>
+<div class="actions">
+<button onclick="like('${doc.id}')">❤️ ${d.likes}</button>
+<button onclick="comments('${doc.id}')">💬</button>
+${auth.currentUser.email===OWNER_EMAIL?
+`<button onclick="deletePost('${doc.id}')">🗑</button>`:""}
+</div>
+</div>`;
+});
+feed.innerHTML=html;
+});
+}
+
+function like(id){
+db.collection("posts").doc(id).update({
+likes:firebase.firestore.FieldValue.increment(1)
+});
+}
+
+function deletePost(id){
+db.collection("posts").doc(id).delete();
+}
+
+function comments(id){
+currentPost=id;
+panel.style.display="block";
+db.collection("posts").doc(id)
+.collection("comments").orderBy("time")
+.onSnapshot(snapshot=>{
+let html="<h3>Comments</h3>";
+snapshot.forEach(doc=>{
+let d=doc.data();
+html+=`<p><b>${d.email}</b>: ${d.text}</p>`;
+});
+html+=`
+<input id="cmt" placeholder="Write comment"><br><br>
+<button onclick="addComment()">Send</button>
+<button onclick="closePanel()">Close</button>
+`;
+panel.innerHTML=html;
+});
+}
+
+function addComment(){
+db.collection("posts").doc(currentPost)
+.collection("comments").add({
+email:auth.currentUser.email,
+text:cmt.value,
+time:Date.now()
+});
+cmt.value="";
+}
+
+function closePanel(){
+panel.style.display="none";
+}
+
+function openProfile(){
+panel.style.display="block";
+let user=auth.currentUser;
+let creatorTag=user.email===OWNER_EMAIL?
+"<span class='admin'>(Creator)</span>":"";
+panel.innerHTML=`
+<h2>${user.email}</h2> ${creatorTag}
+<p>Welcome to your profile</p>
+<button onclick="closePanel()">Close</button>
+`;
 }
 </script>
 
